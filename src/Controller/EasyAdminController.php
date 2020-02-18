@@ -8,6 +8,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Event\EasyAdminEvents;
 use League\Uri\Modifiers\RemoveQueryParams;
 use League\Uri\Schemes\Http;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use AlterPHP\EasyAdminExtensionBundle\Model\Tab\Tab;
+use AlterPHP\EasyAdminExtensionBundle\Model\Tab\TabContent;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 
 class EasyAdminController extends BaseEasyAdminControler
 {
@@ -124,5 +127,81 @@ class EasyAdminController extends BaseEasyAdminControler
         }
 
         return new JsonResponse(['html' => $this->renderView($templatePath, $parameters)]);
+    }
+
+    /**
+     * The method that is executed when the user performs a 'show' action on an entity.
+     *
+     * @return Response
+     */
+    protected function showAction()
+    {
+        $this->dispatch(EasyAdminEvents::PRE_SHOW);
+
+        $id = $this->request->query->get('id');
+        $easyadmin = $this->request->attributes->get('easyadmin');
+        $entity = $easyadmin['item'];
+
+        $fields = $this->entity['show']['fields'];
+        $deleteForm = $this->createDeleteForm($this->entity['name'], $id);
+        $tab = null;
+        $currentTab = null;
+        if($this->request->getSession()->has(\AlterPHP\EasyAdminExtensionBundle\Model\Tab\Tab::NAME_CURRENT_TAB)){
+            $currentTab = $this->request->getSession()->get(\AlterPHP\EasyAdminExtensionBundle\Model\Tab\Tab::NAME_CURRENT_TAB);
+        }
+        foreach ($fields as $field => $metadata) {
+            if($metadata["type"] == Tab::TAB_TITLE){
+                $tab = Tab::createFromMetadata($metadata);
+                unset($fields[$field]);
+            }else if($metadata["type"] == Tab::TAB_CONTENT){
+                $routeParameters = isset($metadata["route_parameters"]) ? $metadata["route_parameters"] : [];
+                $routeParameters["id"]  = $id;
+                $routeParameters["entity"]  = $this->request->query->get('entity');
+                $routeParameters["action"]  = $this->request->query->get('action');
+                $metadata["route_parameters"] = $routeParameters;
+                $tabContent = TabContent::createFromMetadata($metadata);
+                if($tab === null){
+                    $tab = Tab::createFromMetadata();
+                }
+                $tab->addTabContent($tabContent);
+                unset($fields[$field]);
+            }else if($tab !== null && isset($metadata["property"])){
+                $tabContent = $tab->getLastTabContent();
+                $tabContent->addField($field,$metadata);
+                unset($fields[$field]);
+            }else if($tab !== null && !isset($metadata["property"])){
+                $tabContent = $tab->getLastTabContent();
+                $tabContent->addField($field,$metadata);
+                unset($fields[$field]);
+            }
+        }
+        if($tab !== null){
+            $tab->resolveCurrentTab($currentTab);
+        }
+        $this->dispatch(EasyAdminEvents::POST_SHOW, array(
+            'deleteForm' => $deleteForm,
+            'fields' => $fields,
+            'entity' => $entity,
+        ));
+
+        $parameters = array(
+            'entity' => $entity,
+            'fields' => $fields,
+            'delete_form' => $deleteForm->createView(),
+            'tab' => $tab,
+        );
+
+        return $this->executeDynamicMethod('render<EntityName>Template', array('show', $this->entity['templates']['show'], $parameters));
+    }
+    
+    /**
+     * @Route("/tab", name="easyadmin_tab")
+     */
+    public function tabAction(\Symfony\Component\HttpFoundation\Request $request)
+    {
+        if($request->query->has(\AlterPHP\EasyAdminExtensionBundle\Model\Tab\Tab::NAME_CURRENT_TAB)){
+            $request->getSession()->set(\AlterPHP\EasyAdminExtensionBundle\Model\Tab\Tab::NAME_CURRENT_TAB,$request->query->get(\AlterPHP\EasyAdminExtensionBundle\Model\Tab\Tab::NAME_CURRENT_TAB));
+        }
+        return new \Symfony\Component\HttpFoundation\JsonResponse();
     }
 }
