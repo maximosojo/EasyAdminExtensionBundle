@@ -1,20 +1,15 @@
-<ul class="nav nav-tabs" style="margin: 0;">
-    <li class="tab-title">
-        {% if tab.icon %}<i class="{{ tab.icon }}"></i>{% else %}<i class="fa fa-check"></i>{% endif %}&nbsp;<span>{{ tab.name|trans }}</span>
-    </li>
-    <li>
-        <ul id="{{ tab.id }}" class="nav nav-tabs" style="margin: 0;">
-            {% for tabContent in tab.tabsContent if tabContent.type == constant("AlterPHP\\EasyAdminExtensionBundle\\Model\\Tab\\Tab::TAB_CONTENT") %}
-                <li {% if tabContent.active %}class="active"{% endif%}>
-                    {% set tabTitle = tabContent.title|trans %}
-                    <a data-toggle="tab" href="#{{ tabContent.id }}" title="{{ tabTitle }}" {% if tabContent.route is not null %}tab-ajax="true" data-url="{{ url(tabContent.route,tabContent.routeParameters) }}"{% else %}tab-ajax="false"{% endif %}>
-                        {% if tabContent.icon is not null %}<i class="{{ tabContent.icon }}"></i>&nbsp;{% endif %}{{ tabTitle }}
-                    </a>
-                </li>
-            {% endfor %}
-        </ul>
-    </li>
-</ul>
+<div class="nav-tabs-custom form-tabs">
+    <ul id="{{ tab.id }}" class="nav nav-tabs" style="margin: 0;">
+        {% for tabContent in tab.tabsContent if tabContent.type == constant("AlterPHP\\EasyAdminExtensionBundle\\Model\\Tab\\Tab::TAB_CONTENT") %}
+            <li class="nav-item">
+                {% set tabTitle = tabContent.title|trans %}
+                <a data-toggle="tab" href="#{{ tabContent.id }}" title="{{ tabTitle }}" {% if tabContent.route is not null %}tab-ajax="true" data-url="{{ url(tabContent.route,tabContent.routeParameters) }}" class="nav-link {% if tabContent.active %}active{% endif%}" {% else %}tab-ajax="false"{% endif %}>
+                    {% if tabContent.icon is not null %}<i class="{{ tabContent.icon }}"></i>&nbsp;{% endif %}{{ tabTitle }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
 <div class="tab-content">
     {% for tabContent in tab.tabsContent if tabContent.type == constant("AlterPHP\\EasyAdminExtensionBundle\\Model\\Tab\\Tab::TAB_CONTENT") %}
         <div class="tab-pane animated fadeIn {% if tabContent.active %}active{% endif%}" id="{{ tabContent.id }}">
@@ -28,7 +23,7 @@
         </div>
     {% endfor %}
 </div>
-<div id="lo-{{ tab.id }}" class="hide">
+<div id="lo-{{ tab.id }}" class="hide" style="display: none;">
     <div class="tab-pane l-loading-container">
         {{ "Loading content"|trans }}
         <div class='loading'><p class='blocktext'>
@@ -51,7 +46,7 @@
             },
             reload: function(){
                 this.isReloading = true;
-                $("#"+tabsService.id+" > li.active > a").dblclick();
+                $("#"+tabsService.id+" > li > a.active").dblclick();
             },
             done: function(){
                 this.isReloading = false;
@@ -129,6 +124,32 @@
     });
 </script>
 <style>
+    .content-body .form-horizontal, .content-body form{
+        padding: 18px 0px;
+    }
+    .form-tabs .nav-tabs {
+        background: #f8fafc;
+    }
+    li.nav-item a {
+        display: block;
+        padding: .5rem 1rem;
+    }
+    li.nav-item a.active {
+        transform: translateY(1px);
+    }
+    li.nav-item a.active {
+        color: var(--gray-800);
+        background-color: var(--form-bg);
+        border-left-color: var(--border-color);
+        border-bottom-color: transparent;
+        border-right-color: var(--border-color);
+        border-top-color: var(--border-color);
+    }
+    li.nav-item a {
+        border: var(--border-width) solid transparent;
+        border-top-left-radius: var(--border-radius);
+        border-top-right-radius: var(--border-radius);
+    }
     .tab-title {
         padding: 11px;
         background-color: #0071BD;
@@ -138,13 +159,13 @@
         vertical-align: middle;
     }
     .tab-content {
-        background-color: #ffffff;
+        /*background-color: #ffffff;*/
         padding: 16px 12px;
-        position: relative;
+        /*position: relative;
         -webkit-box-shadow: 1px 0 10px 1px rgba(0, 0, 0, 0.3);
         -moz-box-shadow: 1px 0 10px 1px rgba(0, 0, 0, 0.3);
         box-shadow: 1px 0 10px 1px rgba(0, 0, 0, 0.3);
         margin-bottom: 20px;
-        min-height: 16em;
+        min-height: 16em;*/
     }
 </style>
