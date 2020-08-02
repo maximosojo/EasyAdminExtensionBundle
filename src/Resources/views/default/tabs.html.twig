@@ -23,7 +23,7 @@
         </div>
     {% endfor %}
 </div>
-<div id="lo-{{ tab.id }}" class="hide" style="display: none;">
+<div id="lo-{{ tab.id }}" class="hide">
     <div class="tab-pane l-loading-container">
         {{ "Loading content"|trans }}
         <div class='loading'><p class='blocktext'>
@@ -124,6 +124,9 @@
     });
 </script>
 <style>
+    .hide{
+        display: none;
+    }
     .content-body .form-horizontal, .content-body form{
         padding: 18px 0px;
     }
